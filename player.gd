@@ -1,7 +1,9 @@
 extends KinematicBody2D
 
+var mounted_char : Sprite
+
 var facing_dir : Vector2
-var move_vector : Vector2
+var move_vec : Vector2
 var gravity = 2
 var gravity_max = 500
 var speed_jump = -1000
@@ -17,27 +19,28 @@ func _process(delta):
 	
 	handle_input()
 	if gravity < gravity_max:
-		move_vector.y += gravity
+		move_vec.y += gravity
 	
-	if abs(move_vector.x) > 450:
-		move_vector.x 
+	if abs(move_vec.x) > 450:
+		move_vec.x 
 	
-	if move_vector.x > 0:
-		move_vector.x -= speed_damp
-		if move_vector.x > speed_max:
-			move_vector.x = speed_max
-	elif move_vector.x < 0:
-		move_vector.x += speed_damp
-		if move_vector.x < -speed_max:
-			move_vector.x = -speed_max
+	if move_vec.x > 0:
+		move_vec.x -= speed_damp
+		if move_vec.x > speed_max:
+			move_vec.x = speed_max
+	elif move_vec.x < 0:
+		move_vec.x += speed_damp
+		if move_vec.x < -speed_max:
+			move_vec.x = -speed_max
 	
-	move_vector = move_and_slide(move_vector, Vector2.UP, true)
+	move_vec = move_and_slide(move_vec, Vector2.UP, true)
 	
 	if Input.is_action_just_pressed("attack"):
 		attack()
 
 func set_glaive_angle(angle):
 	$glaive.rotation = angle
+	$raycast.rotation = angle
 
 func set_face_dir(angle):
 	if abs(angle) > PI/2:
@@ -50,16 +53,24 @@ func set_face_dir(angle):
 func handle_input():
 	if Input.is_action_pressed("move_right"):
 		if facing_dir == Vector2.RIGHT:
-			move_vector.x += speed_front
+			move_vec.x += speed_front
 		else:
-			move_vector.x += speed_back
+			move_vec.x += speed_back
 	if Input.is_action_pressed("move_left"):
 		if facing_dir == Vector2.LEFT:
-			move_vector.x -= speed_front
+			move_vec.x -= speed_front
 		else:
-			move_vector.x -= speed_back
+			move_vec.x -= speed_back
 	if Input.is_action_just_pressed("jump"):
-		move_vector.y = speed_jump
+		move_vec.y = speed_jump
 
 func attack():
 	$animator.play("attack")
+	$raycast.enabled = true
+	while $animator.is_playing():
+		print($animator.is_playing())
+		if $raycast.is_colliding():
+			var mob: Node = $raycast.get_collider()
+			if mob.is_in_group("mobs"):
+				mob.hit()
+	$raycast.enabled = false
